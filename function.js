@@ -17,7 +17,7 @@ function loadAddresses() {
         addresses = JSON.parse(storedAddresses);
     } else {
         // If no addresses are found, redirect back to the intro page
-        window.location.href = 'intro.html';
+        window.location.href = 'main.html';
     }
 }
 
