@@ -3,8 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ethereum Address Manager - Intro</title>
+    <title>Ethereum Address Manager</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
         body {
             font-family: Arial, sans-serif;
             margin: 0;
@@ -29,7 +32,7 @@
             font-size: 24px;
             margin-bottom: 20px;
         }
-        textarea {
+        #addressInput {
             width: 100%;
             height: 150px;
             margin-bottom: 15px;
@@ -39,43 +42,173 @@
             resize: vertical;
             font-size: 16px;
         }
+        #wallet-order {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        #wallet-count {
+            margin-bottom: 10px;
+        }
+        #address-display {
+            word-break: break-all;
+            margin-bottom: 15px;
+            font-size: 16px;
+            background-color: #f8f8f8;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #message {
+            color: #ff6600;
+            font-weight: bold;
+            margin-top: 10px;
+        }
         button {
-            display: block;
-            width: 100%;
-            padding: 12px;
+            padding: 12px 20px;
+            margin: 5px;
+            font-size: 16px;
+            cursor: pointer;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
-            font-size: 18px;
-            cursor: pointer;
+            width: calc(50% - 10px);
+            max-width: 200px;
         }
         button:hover {
             background-color: #45a049;
         }
+        #notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+            text-align: center;
+        }
         @media (max-width: 480px) {
-            h1 {
+            #wallet-order {
                 font-size: 20px;
             }
-            textarea {
+            #address-display, #addressInput {
                 font-size: 14px;
             }
             button {
-                font-size: 16px;
+                font-size: 14px;
+                padding: 10px 15px;
             }
         }
     </style>
 </head>
 <body>
     <div id="container">
-        <h1>Ethereum Address Manager</h1>
-        <textarea id="addressInput" placeholder="Enter Ethereum addresses, one per line"></textarea>
-        <button id="startBtn">Start</button>
+        <div id="input-section">
+            <h1>Ethereum Address Manager</h1>
+            <textarea id="addressInput" placeholder="Enter Ethereum addresses, one per line"></textarea>
+            <button id="startBtn">Start</button>
+        </div>
+        <div id="iteration-section" style="display: none;">
+            <div id="wallet-order"></div>
+            <div id="wallet-count"></div>
+            <div id="address-display"></div>
+            <div style="display: flex; justify-content: space-between;">
+                <button id="copy-btn">Copy</button>
+                <button id="next-btn">Next</button>
+            </div>
+            <div id="message"></div>
+        </div>
     </div>
+    <div id="notification"></div>
 
-    <script src="intro.js"></script>
     <script>
-        console.log('main.html loaded'); // Debugging line
+        let addresses = [];
+        let currentIndex = 0;
+        let hasIteratedAll = false;
+
+        const inputSection = document.getElementById('input-section');
+        const iterationSection = document.getElementById('iteration-section');
+        const addressInput = document.getElementById('addressInput');
+        const startBtn = document.getElementById('startBtn');
+        const walletOrder = document.getElementById('wallet-order');
+        const walletCount = document.getElementById('wallet-count');
+        const addressDisplay = document.getElementById('address-display');
+        const copyBtn = document.getElementById('copy-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const message = document.getElementById('message');
+        const notification = document.getElementById('notification');
+
+        function showNotification(text) {
+            notification.textContent = text;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            if (addresses.length === 0) {
+                message.textContent = 'No addresses found. Please enter some addresses.';
+                return;
+            }
+
+            walletOrder.textContent = `Wallet ${currentIndex + 1}`;
+            walletCount.textContent = `Total Wallets: ${addresses.length}`;
+            addressDisplay.textContent = addresses[currentIndex];
+            
+            if (hasIteratedAll) {
+                message.textContent = 'You have iterated all addresses.';
+            } else {
+                message.textContent = '';
+            }
+        }
+
+        startBtn.addEventListener('click', () => {
+            addresses = addressInput.value
+                .split('\n')
+                .map(addr => addr.trim())
+                .filter(addr => addr !== '');
+
+            if (addresses.length === 0) {
+                alert('Please enter at least one address.');
+                return;
+            }
+
+            inputSection.style.display = 'none';
+            iterationSection.style.display = 'block';
+            updateDisplay();
+        });
+
+        copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(addresses[currentIndex]).then(() => {
+                showNotification('Address copied to clipboard!');
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                showNotification('Failed to copy address.');
+            });
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = (currentIndex + 1) % addresses.length;
+            if (currentIndex === 0) {
+                hasIteratedAll = true;
+            }
+            updateDisplay();
+        });
+
+        // Clear cache and reset on page load
+        window.onload = () => {
+            addressInput.value = '';
+            addresses = [];
+            currentIndex = 0;
+            hasIteratedAll = false;
+            inputSection.style.display = 'block';
+            iterationSection.style.display = 'none';
+        };
     </script>
 </body>
 </html>
